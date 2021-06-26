@@ -7,3 +7,5 @@ Originally, this was an overlay for Gentoo Linux supporting musl as a libc. That
 This would provide ebuilds supplementary to those at https://gitweb.gentoo.org/proj/musl.git.
 
 See https://wiki.gentoo.org/wiki/Project:Hardened_musl for more information.
+
+The previous state of this overlay may be found at https://github.com/ennui93/ennui-20210626
