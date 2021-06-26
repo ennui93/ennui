@@ -1,4 +1,4 @@
-# ennui
+# ennui Gentoo Linux overlay
 At present, this repo is primarily targeted at running a minimalist Gentoo installation on x86_64 with GNU glibc sans X, dbus, systemd, or any sound servers.
 
 ## musl
@@ -8,4 +8,6 @@ This would provide ebuilds supplementary to those at https://gitweb.gentoo.org/p
 
 See https://wiki.gentoo.org/wiki/Project:Hardened_musl for more information.
 
-The previous state of this overlay may be found at https://github.com/ennui93/ennui-20210626
+## History
+- All commits prior to this date were audited and GPG signed on 2021-06-26.
+- The previous state of this overlay may be found at https://github.com/ennui93/ennui-20210626
