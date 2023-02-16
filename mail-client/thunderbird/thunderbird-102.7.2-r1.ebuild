@@ -134,7 +134,7 @@ COMMON_DEPEND="${TB_ONLY_DEPEND}
 	x11-libs/libXrandr
 	x11-libs/libXtst
 	x11-libs/libxcb:=
-	x11-libs/libxkbcommon[X]
+	x11-libs/libxkbcommon
 	x11-libs/pango
 	x11-libs/pixman
 	dbus? (
