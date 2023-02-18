@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2023 Gentoo Authors and Martin V\"ath
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -7,22 +7,24 @@ inherit gnome2 meson-multilib multilib
 
 DESCRIPTION="Gimp ToolKit +"
 HOMEPAGE="https://www.gtk.org/"
+SRC_URI="${SRC_URI-}"
 
 LICENSE="LGPL-2+"
 SLOT="3"
-IUSE="aqua broadway cloudproviders colord cups examples gtk-doc +introspection sysprof test vim-syntax wayland +X xinerama"
+IUSE="adwaita-icon-theme aqua atk-bridge broadway cloudproviders colord cups examples gtk-doc +introspection sysprof test vim-syntax wayland +X xinerama"
 REQUIRED_USE="
 	|| ( aqua wayland X )
 	xinerama? ( X )
 "
 
-KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~ia64 ~loong ~mips ~ppc ~ppc64 ~riscv ~sparc ~x86 ~amd64-linux ~x86-linux ~ppc-macos ~sparc-solaris ~sparc64-solaris ~x64-solaris ~x86-solaris"
+KEYWORDS="~alpha amd64 arm arm64 hppa ~ia64 ~loong ~mips ppc ppc64 ~riscv ~s390 sparc x86 ~amd64-linux ~x86-linux ~ppc-macos ~sparc-solaris ~sparc64-solaris ~x64-solaris ~x86-solaris"
 
 # Upstream wants us to do their job:
 # https://bugzilla.gnome.org/show_bug.cgi?id=768662#c1
 RESTRICT="test"
 
 COMMON_DEPEND="
+	atk-bridge? ( >=app-accessibility/at-spi2-core-2.46.0[introspection?,${MULTILIB_USEDEP}] )
 	>=dev-libs/fribidi-0.19.7[${MULTILIB_USEDEP}]
 	>=dev-libs/glib-2.57.2:2[${MULTILIB_USEDEP}]
 	media-libs/fontconfig[${MULTILIB_USEDEP}]
@@ -70,8 +72,9 @@ RDEPEND="${COMMON_DEPEND}
 "
 # librsvg for svg icons (PDEPEND to avoid circular dep), bug #547710
 PDEPEND="
-	gnome-base/librsvg[${MULTILIB_USEDEP}]
-	>=x11-themes/adwaita-icon-theme-3.14
+	adwaita-icon-theme? ( gnome-base/librsvg[${MULTILIB_USEDEP}]
+	  >=x11-themes/adwaita-icon-theme-3.14 )
+	!adwaita-icon-theme? ( x11-themes/hicolor-icon-theme virtual/freedesktop-icon-theme )
 	vim-syntax? ( app-vim/gtk-syntax )
 "
 BDEPEND="
@@ -100,11 +103,15 @@ PATCHES=(
 	"${FILESDIR}"/${P}-introspection.patch
 	# gtk-update-icon-cache is installed by dev-util/gtk-update-icon-cache
 	"${FILESDIR}"/${PN}-3.24.36-update-icon-cache.patch
+	"${FILESDIR}"/${PN}-atk-bridge-meson.build.patch
+	"${FILESDIR}"/${PN}-atk-bridge-meson_options.txt.patch
+	"${FILESDIR}"/${PN}-atk-bridge-gtkaccessibility.patch
 )
 
 multilib_src_configure() {
 	local emesonargs=(
 		$(meson_use aqua quartz_backend)
+		$(meson_use atk-bridge atk_bridge)
 		$(meson_use broadway broadway_backend)
 		$(meson_use cloudproviders)
 		$(meson_use examples demos)
