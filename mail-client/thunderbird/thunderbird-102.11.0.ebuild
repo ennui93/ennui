@@ -753,7 +753,7 @@ src_configure() {
 	mozconfig_use_enable wifi necko-wifi
 
 	if use wayland ; then
-		mozconfig_add_options_ac '+x11+wayland' --enable-default-toolkit=cairo-gtk3-x11-wayland
+		mozconfig_add_options_ac '+wayland' --enable-default-toolkit=cairo-gtk3-wayland-only
 	else
 		mozconfig_add_options_ac '+x11' --enable-default-toolkit=cairo-gtk3
 	fi
@@ -965,7 +965,7 @@ src_compile() {
 		addpredict /root
 	fi
 
-	local -x GDK_BACKEND=x11
+	local -x GDK_BACKEND=wayland
 
 	${virtx_cmd} ./mach build --verbose \
 		|| die
