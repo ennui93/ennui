@@ -1,0 +1,44 @@
+--- a/js/src/old-configure.in	2023-05-27 13:49:01.148670194 +0200
++++ b/js/src/old-configure.in	2023-05-27 13:50:53.729660401 +0200
+@@ -233,19 +233,6 @@
+                   AC_MSG_RESULT([no])
+                   LDFLAGS=$_SAVE_LDFLAGS)
+ 
+-    # While sha1 is deterministic, it is slower.
+-    if test -z "$DEVELOPER_OPTIONS"; then
+-        build_id=sha1
+-    else
+-        build_id=uuid
+-    fi
+-    AC_MSG_CHECKING([for --build-id=$build_id option to ld])
+-    _SAVE_LDFLAGS=$LDFLAGS
+-    LDFLAGS="$LDFLAGS -Wl,--build-id=$build_id"
+-    AC_TRY_LINK(,,AC_MSG_RESULT([yes]),
+-                  AC_MSG_RESULT([no])
+-                  LDFLAGS=$_SAVE_LDFLAGS)
+-
+     _DEFINES_CFLAGS="-include $jsconfdefs -DMOZILLA_CLIENT"
+ fi
+ 
+--- a/old-configure.in	2023-05-27 13:49:40.090666807 +0200
++++ b/old-configure.in	2023-05-27 13:51:20.569658066 +0200
+@@ -239,19 +239,6 @@
+                   AC_MSG_RESULT([no])
+                   LDFLAGS=$_SAVE_LDFLAGS)
+ 
+-    # While sha1 is deterministic, it is slower.
+-    if test -z "$DEVELOPER_OPTIONS"; then
+-        build_id=sha1
+-    else
+-        build_id=uuid
+-    fi
+-    AC_MSG_CHECKING([for --build-id=$build_id option to ld])
+-    _SAVE_LDFLAGS=$LDFLAGS
+-    LDFLAGS="$LDFLAGS -Wl,--build-id=$build_id"
+-    AC_TRY_LINK(,,AC_MSG_RESULT([yes]),
+-                  AC_MSG_RESULT([no])
+-                  LDFLAGS=$_SAVE_LDFLAGS)
+-
+     AC_MSG_CHECKING([for --ignore-unresolved-symbol option to ld])
+     HAVE_LINKER_SUPPORT_IGNORE_UNRESOLVED=
+     _SAVE_LDFLAGS=$LDFLAGS
