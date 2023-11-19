@@ -1,0 +1,87 @@
+From 168e00a41c383aed29f442f56e4d2a28baa47e11 Mon Sep 17 00:00:00 2001
+From: Enne Eziarc <flussence+git@flussence.eu>
+Date: Fri, 3 Mar 2023 20:24:31 +0000
+Subject: [PATCH 2/2] Make atk-bridge optional on X11
+
+---
+ gtk/a11y/gtkaccessibility.c |  4 ++--
+ meson.build                 | 13 ++++++++++---
+ meson_options.txt           |  2 ++
+ 3 files changed, 14 insertions(+), 5 deletions(-)
+
+diff --git a/gtk/a11y/gtkaccessibility.c b/gtk/a11y/gtkaccessibility.c
+index 7f0e5207d..f2ef2eb7e 100644
+--- a/gtk/a11y/gtkaccessibility.c
++++ b/gtk/a11y/gtkaccessibility.c
+@@ -37,7 +37,7 @@
+ #include <gtk/gtktogglebutton.h>
+ #include <gtk/gtkaccessible.h>
+ 
+-#ifdef GDK_WINDOWING_X11
++#ifdef HAVE_ATK_BRIDGE
+ #include <atk-bridge.h>
+ #endif
+ 
+@@ -988,7 +988,7 @@ _gtk_accessibility_init (void)
+   _gtk_accessibility_override_atk_util ();
+   do_window_event_initialization ();
+ 
+-#ifdef GDK_WINDOWING_X11
++#ifdef HAVE_ATK_BRIDGE
+   atk_bridge_adaptor_init (NULL, NULL);
+ #endif
+ 
+diff --git a/meson.build b/meson.build
+index 5444fa112..000fd3932 100644
+--- a/meson.build
++++ b/meson.build
+@@ -564,7 +564,6 @@ if x11_enabled
+   xfixes_dep     = dependency('xfixes', required: false)
+   xcomposite_dep = dependency('xcomposite', required: false)
+   fontconfig_dep = dependency('fontconfig', fallback: ['fontconfig', 'fontconfig_dep'])
+-  atkbridge_dep  = dependency('atk-bridge-2.0', version: at_spi2_atk_req)
+ 
+   backend_immodules += ['xim']
+ 
+@@ -583,8 +582,6 @@ if x11_enabled
+     x11_pkgs += ['xdamage']
+   endif
+ 
+-  atk_pkgs += ['atk-bridge-2.0']
+-
+   cdata.set('HAVE_XDAMAGE', xdamage_dep.found() ? 1 : false)
+   cdata.set('HAVE_XCURSOR', xcursor_dep.found() ? 1 : false)
+   cdata.set('HAVE_XCOMPOSITE', xcomposite_dep.found() ? 1 : false)
+@@ -626,6 +623,16 @@ if x11_enabled
+     cdata.set('XINPUT_2_4', 1)
+   endif
+ 
++  enable_atk_bridge = get_option('atk_bridge')
++  if enable_atk_bridge
++    atkbridge_dep  = dependency('atk-bridge-2.0', version: at_spi2_atk_req, required: enable_atk_bridge)
++    if atkbridge_dep.found()
++      cdata.set('HAVE_ATK_BRIDGE', 1)
++      atk_pkgs += ['atk-bridge-2.0']
++    endif
++  else
++    atkbridge_dep = []
++  endif
+ 
+   enable_xinerama = get_option('xinerama')
+   if enable_xinerama != 'no'
+diff --git a/meson_options.txt b/meson_options.txt
+index 94099aa01..c4ec4fd44 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -11,6 +11,8 @@ option('quartz_backend', type: 'boolean', value: true,
+   description : 'Enable the macOS gdk backend (only when building on macOS)')
+ 
+ # Optional dependencies
++option('atk_bridge', type: 'boolean', value: true,
++  description : 'Enable AT-SPI ATK bridge support')
+ option('xinerama', type: 'combo', choices : ['yes', 'no', 'auto'], value : 'auto',
+   description : 'Enable support for the Xinerama extension')
+ option('cloudproviders', type: 'boolean', value: false,
+-- 
+2.39.2
+

@@ -1,42 +1,39 @@
-# Copyright 1999-2023 Gentoo Authors and Martin V\"ath
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
-inherit gnome2 meson-multilib multilib
+inherit gnome2 meson-multilib multilib toolchain-funcs virtualx
 
 DESCRIPTION="Gimp ToolKit +"
 HOMEPAGE="https://www.gtk.org/"
-SRC_URI="${SRC_URI-}"
 
 LICENSE="LGPL-2+"
 SLOT="3"
-IUSE="adwaita-icon-theme aqua atk-bridge broadway cloudproviders colord cups examples gtk-doc +introspection sysprof test vim-syntax wayland +X xinerama"
+IUSE="aqua accessibility broadway cloudproviders colord cups examples gtk-doc +introspection sysprof test vim-syntax wayland +X xinerama"
 REQUIRED_USE="
 	|| ( aqua wayland X )
+	test? ( X )
 	xinerama? ( X )
 "
+RESTRICT="!test? ( test )"
 
-KEYWORDS="~alpha amd64 arm arm64 hppa ~ia64 ~loong ~mips ppc ppc64 ~riscv ~s390 sparc x86 ~amd64-linux ~x86-linux ~ppc-macos ~sparc-solaris ~sparc64-solaris ~x64-solaris ~x86-solaris"
-
-# Upstream wants us to do their job:
-# https://bugzilla.gnome.org/show_bug.cgi?id=768662#c1
-RESTRICT="test"
+KEYWORDS="~alpha amd64 arm arm64 ~hppa ~ia64 ~loong ~mips ppc ppc64 ~riscv sparc x86 ~amd64-linux ~x86-linux ~ppc-macos ~x64-solaris"
 
 COMMON_DEPEND="
-	atk-bridge? ( >=app-accessibility/at-spi2-core-2.46.0[introspection?,${MULTILIB_USEDEP}] )
+	accessibility? ( >=app-accessibility/at-spi2-core-2.46.0[introspection?,${MULTILIB_USEDEP}] )
 	>=dev-libs/fribidi-0.19.7[${MULTILIB_USEDEP}]
 	>=dev-libs/glib-2.57.2:2[${MULTILIB_USEDEP}]
 	media-libs/fontconfig[${MULTILIB_USEDEP}]
 	>=media-libs/harfbuzz-2.2.0:=
-	>=media-libs/libepoxy-1.4[X(+)?,${MULTILIB_USEDEP}]
+	>=media-libs/libepoxy-1.4[X(+)?,egl(+),${MULTILIB_USEDEP}]
 	virtual/libintl[${MULTILIB_USEDEP}]
 	>=x11-libs/cairo-1.14[aqua?,glib,svg(+),X?,${MULTILIB_USEDEP}]
 	>=x11-libs/gdk-pixbuf-2.30:2[introspection?,${MULTILIB_USEDEP}]
 	>=x11-libs/pango-1.44.0[introspection?,${MULTILIB_USEDEP}]
 	x11-misc/shared-mime-info
 
-	cloudproviders? ( net-libs/libcloudproviders )
+	cloudproviders? ( net-libs/libcloudproviders[${MULTILIB_USEDEP}] )
 	colord? ( >=x11-misc/colord-0.1.9:0=[${MULTILIB_USEDEP}] )
 	cups? ( >=net-print/cups-2.0[${MULTILIB_USEDEP}] )
 	introspection? ( >=dev-libs/gobject-introspection-1.39:= )
@@ -72,9 +69,8 @@ RDEPEND="${COMMON_DEPEND}
 "
 # librsvg for svg icons (PDEPEND to avoid circular dep), bug #547710
 PDEPEND="
-	adwaita-icon-theme? ( gnome-base/librsvg[${MULTILIB_USEDEP}]
-	  >=x11-themes/adwaita-icon-theme-3.14 )
-	!adwaita-icon-theme? ( x11-themes/hicolor-icon-theme virtual/freedesktop-icon-theme )
+	gnome-base/librsvg[${MULTILIB_USEDEP}]
+	>=x11-themes/adwaita-icon-theme-3.14
 	vim-syntax? ( app-vim/gtk-syntax )
 "
 BDEPEND="
@@ -93,6 +89,7 @@ BDEPEND="
 		app-text/docbook-xml-dtd:4.3
 		>=dev-util/gtk-doc-1.20
 	)
+	test? ( sys-apps/dbus )
 "
 
 MULTILIB_CHOST_TOOLS=(
@@ -100,18 +97,29 @@ MULTILIB_CHOST_TOOLS=(
 )
 
 PATCHES=(
-	"${FILESDIR}"/${P}-introspection.patch
+	# make atk-bridge optional
+	"${FILESDIR}"/atk-bridge.patch
 	# gtk-update-icon-cache is installed by dev-util/gtk-update-icon-cache
-	"${FILESDIR}"/${PN}-3.24.36-update-icon-cache.patch
-	"${FILESDIR}"/${PN}-atk-bridge-meson.build.patch
-	"${FILESDIR}"/${PN}-atk-bridge-meson_options.txt.patch
-	"${FILESDIR}"/${PN}-atk-bridge-gtkaccessibility.patch
+	"${FILESDIR}"/update-icon-cache.patch
 )
+
+src_prepare() {
+	default
+
+	# The border-image-excess-size.ui test is known to fail on big-endian platforms
+	# See https://gitlab.gnome.org/GNOME/gtk/-/issues/5904
+	if [[ $(tc-endian) == big ]]; then
+		sed -i \
+			-e "/border-image-excess-size.ui/d" \
+			-e "/^xfails =/a 'border-image-excess-size.ui'," \
+			testsuite/reftests/meson.build || die
+	fi
+}
 
 multilib_src_configure() {
 	local emesonargs=(
+		$(meson_use accessibility atk_bridge)
 		$(meson_use aqua quartz_backend)
-		$(meson_use atk-bridge atk_bridge)
 		$(meson_use broadway broadway_backend)
 		$(meson_use cloudproviders)
 		$(meson_use examples demos)
@@ -129,7 +137,7 @@ multilib_src_configure() {
 		# user overridden GTK_IM_MODULE envvar
 		-Dbuiltin_immodules=backend
 		-Dman=true
-		-Dtests=false
+		$(meson_use test tests)
 		-Dtracker3=false
 	)
 	meson_src_configure
@@ -137,6 +145,10 @@ multilib_src_configure() {
 
 multilib_src_compile() {
 	meson_src_compile
+}
+
+multilib_src_test() {
+	virtx dbus-run-session meson test -C "${BUILD_DIR}" --timeout-multiplier 4 || die
 }
 
 multilib_src_install() {
